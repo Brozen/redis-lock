@@ -16,10 +16,12 @@ LockContext context = new LockContext(configuration, redisConnectionFactory);
 RedisLock lock = context.createLock("TestLock");
 lock.lock();
 lock.unlock();
+// 使用后应该关闭锁，释放锁占有的redis资源
+lock.close();
 ```
 
 
 #### 待实现
 
 1. 结合到SpringBoot中，添加注解支持；
-2. 实现condition实现分布式同步？
+2. 实现condition实现分布式多线程同步？
