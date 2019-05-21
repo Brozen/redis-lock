@@ -8,5 +8,38 @@
     <artifactId>redis-lock</artifactId>
     <version>0.0.1-SNAPSHOT</version>
 
+    <properties>
+        <spring.boot.version>2.0.3.RELEASE</spring.boot.version>
+        <commons.io.version>2.6</commons.io.version>
+        <rxjava.version>2.2.8</rxjava.version>
+    </properties>
+
+    <dependencies>
+        <!-- Redis -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+            <version>${spring.boot.version}</version>
+        </dependency>
+
+        <!-- Utils -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.4</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>${commons.io.version}</version>
+        </dependency>
+
+        <!-- RxJava -->
+        <dependency>
+            <groupId>io.reactivex.rxjava2</groupId>
+            <artifactId>rxjava</artifactId>
+            <version>${rxjava.version}</version>
+        </dependency>
+    </dependencies>
 
 </project>
