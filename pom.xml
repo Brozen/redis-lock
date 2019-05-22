@@ -10,16 +10,26 @@
 
     <properties>
         <spring.boot.version>2.0.3.RELEASE</spring.boot.version>
+        <spring.version>5.0.7.RELEASE</spring.version>
         <commons.io.version>2.6</commons.io.version>
         <rxjava.version>2.2.8</rxjava.version>
     </properties>
 
     <dependencies>
+        <!-- SpringAOP -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+            <version>${spring.boot.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- Redis -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
             <version>${spring.boot.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <!-- Utils -->
@@ -41,5 +51,18 @@
             <version>${rxjava.version}</version>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>8</source>
+                    <target>8</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>

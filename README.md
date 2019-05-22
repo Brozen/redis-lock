@@ -1,4 +1,4 @@
-# redis-lock
+# redis-locked
 
 #### 介绍
 基于Redis实现的分布式锁
@@ -13,11 +13,11 @@ RedisLock继承自java.util.concurrent.locks.Lock，可以像使用ReentrantLock
 LockConfiguration configuration = LockConfiguration.builder().lockPrefix("RedisLockAA").build();
 LockContext context = new LockContext(configuration, redisConnectionFactory);
 // 锁从LockContext初始化
-RedisLock lock = context.createLock("TestLock");
-lock.lock();
-lock.unlock();
+RedisLock locked = context.createLock("TestLock");
+locked.locked();
+locked.unlock();
 // 使用后应该关闭锁，释放锁占有的redis资源
-lock.close();
+locked.close();
 ```
 
 

@@ -18,7 +18,8 @@ public class TestLock {
 
         // redis中可以保存多把锁，每把锁的全名是 lockPrefix::lockName
         LettuceConnectionFactory redisConnectionFactory = createRedisConnectionFactory();// or from Spring
-        LockConfiguration configuration = LockConfiguration.builder().lockPrefix("RedisLockAA").build();
+        LockConfiguration configuration = new LockConfiguration();
+        configuration.setLockPrefix("RedisLockAA");
         LockContext context = new LockContext(configuration, redisConnectionFactory);
 
         // 锁名称是分布式环境下区分锁的标志

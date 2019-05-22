@@ -123,8 +123,29 @@ public class RedisLock implements Lock, AutoCloseable {
     }
 
     @Override
-    public void lockInterruptibly() {
-        lock();
+    public void lockInterruptibly() throws InterruptedException {
+        if (Thread.interrupted()) {
+            throw new InterruptedException();
+        }
+        if (tryLock()) {
+            return;
+        }
+
+        Thread currentThread = Thread.currentThread();
+        for (; ; ) {
+            if (tryLock()) {
+                return;
+            }
+
+            parkingThread.offer(currentThread);
+            // 线程暂停一段时间后重新尝试获取锁，防止因redis未开启事件推送或网络延迟问题导致无法唤醒线程
+            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(lockConfiguration.getLockCompetitionParkInterval()));
+            parkingThread.remove(currentThread);
+
+            if (Thread.interrupted()) {
+                throw new InterruptedException();
+            }
+        }
     }
 
     @Override
