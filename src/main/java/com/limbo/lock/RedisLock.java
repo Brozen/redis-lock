@@ -33,21 +33,26 @@ public class RedisLock implements Lock, AutoCloseable {
     static final String LOCK_NAME_PREFIX_SPLITER = "::";
     // 字符集UTF-8
     private static final Charset UTF8 = Charset.forName("UTF-8");
+
     // 订阅锁过期事件后，用来取消订阅
-    Disposable messageDisposable;
+    private Disposable messageDisposable;
+
     // 锁名称，锁名称将作为key，在Redis中应当唯一
     private String lockName;
-    private LockContext lockContext;
+    private RedisLockContext lockContext;
     private LockConfiguration lockConfiguration;
     private AtomicBoolean available;// 锁是否可用，close之后则不可用
+
     // 因获取锁失败而阻塞的线程
     private ConcurrentLinkedQueue<Thread> parkingThread;
+
     // 独占锁的线程，如果当前虚拟机中的线程占有锁，则此处引用占有锁的线程
     private AtomicReference<Thread> exclusiveOwnerThread;
+
     // 曾占有锁，但是过期的线程
     private Set<Thread> ownedAndTimeoutThread;
 
-    RedisLock(LockContext context, String lockName, LockConfiguration configuration) {
+    RedisLock(RedisLockContext context, String lockName, LockConfiguration configuration) {
         this.lockContext = context;
         this.lockConfiguration = configuration;
         this.available = new AtomicBoolean(true);
@@ -60,8 +65,6 @@ public class RedisLock implements Lock, AutoCloseable {
         this.messageDisposable = context.getMessageObservable()// observable发布的是上下文中所有锁过期事件，具体的锁名称需要过滤一下
                 .filter(redisMessageInfo -> lockName.equals(redisMessageInfo.getKey()))
                 .subscribe(redisMessageInfo -> {
-                    System.out.println(redisMessageInfo.getMessage());
-
                     switch (redisMessageInfo.getMessage()) {
                         case EXPIRED:
                         case EVICT:
@@ -192,7 +195,7 @@ public class RedisLock implements Lock, AutoCloseable {
         // FIX 创建两把同名锁，在锁1申请，在锁2释放，居然能成功？
         if (exclusiveOwnerThread.get() == Thread.currentThread()
                 && lockContext.getConnection().<Boolean>eval(
-                        LockContext.UNLOCK_SCRIPT.getBytes(UTF8),
+                        RedisLockContext.UNLOCK_SCRIPT.getBytes(UTF8),
                         ReturnType.BOOLEAN, 1,
                         lockName.getBytes(UTF8),
                         getExclusiveOwnerName(thread).getBytes(UTF8)
@@ -242,6 +245,36 @@ public class RedisLock implements Lock, AutoCloseable {
             }
         }
 
+        // 终止监听Redis事件
+        unsubscribeMessage();
+        // 从LockContext中销毁锁
         this.lockContext.disposeLock(this);
+        // GC
+        this.lockContext = null;
+    }
+
+    // 内部方法，用于context销毁时的清理
+    void closeQuietly() {
+        this.available.set(false);
+        if (exclusiveOwnerThread.get() != null) {
+            doUnlock(exclusiveOwnerThread.get(), false);
+        }
+
+        if (!parkingThread.isEmpty()) {
+            Thread t;
+            while ((t = parkingThread.poll()) != null) {
+                LockSupport.unpark(t);
+            }
+        }
+
+        unsubscribeMessage();
+        this.lockContext.disposeLock(this);
+        this.lockContext = null;
+    }
+
+    private void unsubscribeMessage() {
+        if (this.messageDisposable != null && !this.messageDisposable.isDisposed()) {
+            this.messageDisposable.dispose();
+        }
     }
 }

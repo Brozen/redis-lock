@@ -1,6 +1,6 @@
 package com.limbo.lock.aop;
 
-import com.limbo.lock.LockContext;
+import com.limbo.lock.RedisLockContext;
 import com.limbo.lock.RedisLock;
 import com.limbo.lock.annotations.Locked;
 import com.limbo.lock.utils.Ref;
@@ -10,6 +10,7 @@ import org.aspectj.lang.Signature;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.LocalVariableTableParameterNameDiscoverer;
 import org.springframework.expression.Expression;
@@ -31,17 +32,17 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 @Aspect
 @Component
-public class RedisLockAdvice {
+public class RedisLockAdvice implements DisposableBean {
 
     private static final Map<Class<?>, Map<String, Method>> LOCKED_METHOD_CACHE = new ConcurrentHashMap<>();
     private static final Map<String, Expression> LOCK_NAME_EXPRESSION_CACHE = new ConcurrentHashMap<>();
 
-    private LockContext lockContext;
+    private RedisLockContext lockContext;
     private SpelExpressionParser parser;
 
     @Autowired
-    public RedisLockAdvice(LockContext lockContext) {
-        this.lockContext = lockContext;
+    public RedisLockAdvice(RedisLockContext redisLockContext) {
+        this.lockContext = redisLockContext;
         this.parser = new SpelExpressionParser();
     }
 
@@ -145,4 +146,8 @@ public class RedisLockAdvice {
         return methodCache.get(methodName);
     }
 
+    @Override
+    public void destroy() throws Exception {
+        lockContext.close();
+    }
 }

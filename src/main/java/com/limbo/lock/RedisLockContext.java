@@ -7,18 +7,21 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Brozen
  * @date 2019/5/8 3:04 PM
  */
 @Slf4j
-public class LockContext {
+public class RedisLockContext implements AutoCloseable {
     // 解锁Lua脚本
     static final String UNLOCK_SCRIPT;
 
@@ -50,10 +53,14 @@ public class LockContext {
     @Getter
     private Observable<RedisMessageInfo> messageObservable;
 
-    public LockContext(LockConfiguration defaultConfiguration, RedisConnectionFactory connectionFactory) {
+    // 缓存该上下文生成的锁，dispose时移除
+    private Set<RedisLock> locks;
+
+    public RedisLockContext(LockConfiguration defaultConfiguration, RedisConnectionFactory connectionFactory) {
         this.defaultConfiguration = defaultConfiguration;
         this.connectionFactory = connectionFactory;
         this.lockContextUID = Utils.getMac() + "__" + Utils.getPID() + "__" + hashCode();
+        this.locks = new HashSet<>();
 
         this.connection = connectionFactory.getConnection();
         this.subscribeConnection = connectionFactory.getConnection();
@@ -75,20 +82,38 @@ public class LockContext {
     }
 
     public RedisLock createLock(String lockName, LockConfiguration configuration) {
-        return new RedisLock(this, lockName, configuration);
+        RedisLock lock = new RedisLock(this, lockName, configuration);
+        locks.add(lock);
+        return lock;
     }
 
     public RedisLock createLock(String lockName) {
-        return new RedisLock(this, lockName, defaultConfiguration);
+        RedisLock lock = new RedisLock(this, lockName, defaultConfiguration);
+        locks.add(lock);
+        return lock;
     }
 
-    protected void disposeLock(RedisLock lock) {
+    void disposeLock(RedisLock lock) {
         if (lock == null) {
             return;
         }
+        locks.remove(lock);
+    }
 
-        if (lock.messageDisposable != null && !lock.messageDisposable.isDisposed()) {
-            lock.messageDisposable.dispose();
+    @Override
+    public void close() {
+        // 释放锁
+        if (!locks.isEmpty()) {
+            locks.forEach(RedisLock::closeQuietly);
+        }
+        locks.clear();
+        // 关闭连接
+        try {
+            connection.close();
+            subscribeConnection.getSubscription().unsubscribe();
+            subscribeConnection.close();
+        } catch (DataAccessException e) {
+            log.error("关闭RedisLockContext错误，继续执行关闭。", e);
         }
     }
 

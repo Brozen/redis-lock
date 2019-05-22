@@ -1,5 +1,5 @@
 import com.limbo.lock.LockConfiguration;
-import com.limbo.lock.LockContext;
+import com.limbo.lock.RedisLockContext;
 import com.limbo.lock.RedisLock;
 import org.springframework.data.redis.connection.RedisPassword;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
@@ -20,7 +20,7 @@ public class TestLock {
         LettuceConnectionFactory redisConnectionFactory = createRedisConnectionFactory();// or from Spring
         LockConfiguration configuration = new LockConfiguration();
         configuration.setLockPrefix("RedisLockAA");
-        LockContext context = new LockContext(configuration, redisConnectionFactory);
+        RedisLockContext context = new RedisLockContext(configuration, redisConnectionFactory);
 
         // 锁名称是分布式环境下区分锁的标志
         RedisLock lock1 = context.createLock("TestLock");

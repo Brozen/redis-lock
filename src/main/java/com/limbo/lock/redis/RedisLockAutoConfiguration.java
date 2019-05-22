@@ -1,7 +1,7 @@
 package com.limbo.lock.redis;
 
 import com.limbo.lock.LockConfiguration;
-import com.limbo.lock.LockContext;
+import com.limbo.lock.RedisLockContext;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -25,8 +25,8 @@ public class RedisLockAutoConfiguration {
     }
 
     @Bean
-    public LockContext lockContext(RedisConnectionFactory redisConnectionFactory) {
-        return new LockContext(lockConfiguration, redisConnectionFactory);
+    public RedisLockContext lockContext(RedisConnectionFactory redisConnectionFactory) {
+        return new RedisLockContext(lockConfiguration, redisConnectionFactory);
     }
 
 }
