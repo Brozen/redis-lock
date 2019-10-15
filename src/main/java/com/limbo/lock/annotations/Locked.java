@@ -18,12 +18,12 @@ public @interface Locked {
      * 锁名称；
      * 若此处不指定锁名，可以使用expression指定生成锁名称的SpEL表达式；
      */
-    String lockName();
+    String lockName() default "";
 
     /**
      * 生成锁名称的SpELl表达式，如果指定了LockName，则该表达式无效；
      */
-    String expression();
+    String expression() default "";
 
     /**
      * 加锁策略：阻塞锁、自旋锁、快速失败锁；

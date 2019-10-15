@@ -3,6 +3,7 @@ package com.limbo.lock.aop;
 import com.limbo.lock.RedisLockContext;
 import com.limbo.lock.RedisLock;
 import com.limbo.lock.annotations.Locked;
+import com.limbo.lock.exception.LockException;
 import com.limbo.lock.utils.Ref;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -82,7 +83,7 @@ public class RedisLockAdvice implements DisposableBean {
         String lockName = locked.lockName();
         String lockNameExpression = locked.expression();
         if (!StringUtils.hasText(lockName) && !StringUtils.hasText(lockNameExpression)) {
-            return null;
+            throw new LockException("初始化锁失败！未指定锁名称或表达式！", null, Thread.currentThread().getName());
         }
 
         if (!StringUtils.hasText(lockName)) {
@@ -147,7 +148,7 @@ public class RedisLockAdvice implements DisposableBean {
     }
 
     @Override
-    public void destroy() throws Exception {
+    public void destroy() {
         lockContext.close();
     }
 }
