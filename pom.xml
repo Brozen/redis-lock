@@ -6,14 +6,22 @@
 
     <groupId>com.limbo</groupId>
     <artifactId>redis-lock</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.1.0-SNAPSHOT</version>
 
     <properties>
         <spring.boot.version>2.0.3.RELEASE</spring.boot.version>
         <spring.version>5.0.7.RELEASE</spring.version>
         <commons.io.version>2.6</commons.io.version>
         <rxjava.version>2.2.8</rxjava.version>
+        <lombok.version>1.18.4</lombok.version>
     </properties>
+
+    <developers>
+        <developer>
+            <name>Brozen</name>
+            <email>1163890841@qq.com</email>
+        </developer>
+    </developers>
 
     <dependencies>
         <!-- SpringAOP -->
@@ -36,7 +44,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.4</version>
+            <version>${lombok.version}</version>
         </dependency>
         <dependency>
             <groupId>commons-io</groupId>

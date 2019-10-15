@@ -22,12 +22,13 @@ import java.util.Set;
  */
 @Slf4j
 public class RedisLockContext implements AutoCloseable {
+
     // 解锁Lua脚本
     static final String UNLOCK_SCRIPT;
 
     static {
         String unlockScript;
-        try (InputStream lockScriptStream = ClassLoader.getSystemResourceAsStream("com/limbo/lock/unlock.lua")) {
+        try (InputStream lockScriptStream = ClassLoader.getSystemResourceAsStream("unlock.lua")) {
             unlockScript = IOUtils.toString(lockScriptStream, "UTF-8");
         } catch (IOException e) {
             unlockScript = null;
@@ -37,7 +38,7 @@ public class RedisLockContext implements AutoCloseable {
 
     private LockConfiguration defaultConfiguration;
 
-    // 锁上下文唯一ID，可作为标识锁的占有者的前缀
+    // 锁上下文唯一ID，作为标识锁的占有者的前缀
     @Getter
     private String lockContextUID;
 
@@ -79,6 +80,8 @@ public class RedisLockContext implements AutoCloseable {
                 emitter.onNext(new RedisMessageInfo(key, redisMessage));
             }, ("__keyspace@0__:" + defaultConfiguration.getLockPrefix() + "*").getBytes());
         }).subscribeOn(Schedulers.io()).observeOn(Schedulers.io());
+
+        Runtime.getRuntime().addShutdownHook(new Thread(this::close));
     }
 
     public RedisLock createLock(String lockName, LockConfiguration configuration) {
