@@ -47,4 +47,5 @@ public class WebApplication {
 
 #### 待实现
 
-1. 实现condition实现分布式多线程同步？
+1. 锁租约到期自动续约？
+2. 实现condition实现分布式多线程同步？
