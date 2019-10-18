@@ -20,8 +20,31 @@ locked.unlock();
 locked.close();
 ```
 
+#### 在SpringBoot中使用
+1. 首先在pom中引入spring-data-redis；
+```java
+<dependency>
+    <groupId>org.springframework.data</groupId>
+    <artifactId>spring-data-redis</artifactId>
+    <version>${spring.boot.version}</version>
+</dependency>
+```
+
+2. 在启动类上添加注解 @EnableRedisLock；
+```$xslt
+@SpringBootApplication
+@EnableRedisLock
+public class WebApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(WebApplication.class, args);
+    }
+}
+```
+
+3. 在需要加锁的方法上添加注解 @Locked，即可使使方法同步；锁定策略等参考@Locked注解属性的注释；
+
 
 #### 待实现
 
-1. 结合到SpringBoot中，添加注解支持；
-2. 实现condition实现分布式多线程同步？
+1. 实现condition实现分布式多线程同步？
